@@ -13,19 +13,14 @@ export const cartSlice = createSlice({
       state.totalPrice =
         state.totalPrice + action.payload.price * action.payload.quantity;
 
-      const existingCartItemIndex = state.cartItems.findIndex(
+      const existingItem = state.cartItems.find(
         (item) => item.id === action.payload.id
       );
 
-      const existingCartItem = state.cartItems[existingCartItemIndex];
-
-      if (existingCartItem) {
-        state.cartItems[existingCartItemIndex] = {
-          ...existingCartItem,
-          quantity: existingCartItem.quantity + 1,
-        };
+      if (!existingItem) {
+        state.cartItems.push(action.payload);
       } else {
-        state.cartItems = [...state.cartItems, action.payload];
+        existingItem.quantity++;
       }
 
       state.totalCartItems = state.cartItems.reduce(
@@ -34,21 +29,15 @@ export const cartSlice = createSlice({
       );
     },
     removeItem(state, action) {
-      const existingCartItemIndex = state.cartItems.findIndex(
+      const existingCartItem = state.cartItems.find(
         (item) => item.id === action.payload
       );
-
-      const existingCartItem = state.cartItems[existingCartItemIndex];
-
-      if (existingCartItem.quantity > 1) {
-        state.cartItems[existingCartItemIndex] = {
-          ...existingCartItem,
-          quantity: existingCartItem.quantity - 1,
-        };
-      } else {
+      if (existingCartItem.quantity === 1) {
         state.cartItems = state.cartItems.filter(
           (item) => item.id !== action.payload
         );
+      } else {
+        existingCartItem.quantity--;
       }
     },
     toggleCart(state) {
