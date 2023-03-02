@@ -9,6 +9,9 @@ export const cartSlice = createSlice({
     showCart: false,
   },
   reducers: {
+    replaceCart(state, action) {
+      state.cartItems = action.payload.items;
+    },
     addItem(state, action) {
       state.totalPrice =
         state.totalPrice + action.payload.price * action.payload.quantity;

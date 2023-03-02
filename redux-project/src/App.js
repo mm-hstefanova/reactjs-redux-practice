@@ -1,10 +1,70 @@
 import Cart from './components/Cart/Cart';
 import Layout from './components/Layout/Layout';
 import Products from './components/Shop/Products';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { useEffect } from 'react';
+import { uiActions } from './store/ui-slice';
+import Notification from './components/UI/Notification';
+
+let isInitial = true;
 
 function App() {
+  const dispatch = useDispatch();
+
   const cartItems = useSelector((state) => state.cart.cartItems);
+  const cart = useSelector((state) => state.cart);
+  const showCart = useSelector((state) => state.cart.showCart);
+
+  const notification = useSelector((state) => state.ui.notification);
+
+  useEffect(() => {
+    const sendCartData = async () => {
+      dispatch(
+        uiActions.showNotification({
+          status: 'pending',
+          title: 'Sending...',
+          message: 'Sending cart data!',
+        })
+      );
+
+      const response = await fetch(
+        'https://reactjs-http-eb2df-default-rtdb.firebaseio.com/cart.json',
+        {
+          method: 'PUT',
+          body: JSON.stringify(cart),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Sending cart data failed.');
+      }
+
+      dispatch(
+        uiActions.showNotification({
+          status: 'success',
+          title: 'Success!',
+          message: 'Send cart data successfully!',
+        })
+      );
+    };
+
+    // prevent the first time this component builds to send empty cart to the database
+    if (isInitial) {
+      isInitial = false;
+      return;
+    }
+
+    // returns promise, so we can catch the error here
+    sendCartData().catch((error) => {
+      dispatch(
+        uiActions.showNotification({
+          status: 'error',
+          title: 'Error!',
+          message: 'Sending cart data failed!',
+        })
+      );
+    });
+  }, [cart, dispatch]);
 
   const products = [
     {
@@ -29,13 +89,21 @@ function App() {
       price: 15,
     },
   ];
-  const showCart = useSelector((state) => state.cart.showCart);
 
   return (
-    <Layout>
-      {showCart && <Cart items={cartItems} />}
-      <Products items={products} />
-    </Layout>
+    <>
+      {notification && (
+        <Notification
+          status={notification.status}
+          title={notification.title}
+          message={notification.message}
+        />
+      )}
+      <Layout>
+        {showCart && <Cart items={cartItems} />}
+        <Products items={products} />
+      </Layout>
+    </>
   );
 }
 
